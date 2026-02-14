@@ -21,6 +21,7 @@ import { AppService } from './app.service';
       logging: false,
       entities: [Task],
       // Cloud hosting ke liye ssl certificate ki zaroorat pad sakti hai
+      // app.module.ts mein ssl configuration
       ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : null,
     }),
     TasksModule,
