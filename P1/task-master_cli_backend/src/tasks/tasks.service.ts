@@ -1,26 +1,51 @@
-import { Injectable } from '@nestjs/common';
-import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskDto } from './dto/update-task.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Task } from './entities/task.entity';
 
 @Injectable()
 export class TasksService {
-  create(createTaskDto: CreateTaskDto) {
-    return 'This action adds a new task';
+  constructor(
+    @InjectRepository(Task)
+    private readonly tasksRepository: Repository<Task>,
+  ) {}
+
+  async create(title: string, description: string): Promise<Task> {
+    const newTask = this.tasksRepository.create({
+      title,
+      description,
+      isCompleted: false,
+    });
+    return await this.tasksRepository.save(newTask);
   }
 
-  findAll() {
-    return `This action returns all tasks`;
+  async findAll(): Promise<Task[]> {
+    return await this.tasksRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} task`;
+  async findOne(id: number): Promise<Task> {
+    const task = await this.tasksRepository.findOneBy({ id });
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${id} not found`);
+    }
+    return task;
   }
 
-  update(id: number, updateTaskDto: UpdateTaskDto) {
-    return `This action updates a #${id} task`;
+  async update(id: number, updateData: Partial<Task>): Promise<Task> {
+    await this.tasksRepository.update(id, updateData);
+    return this.findOne(id);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} task`;
+  async remove(id: number): Promise<void> {
+    const result = await this.tasksRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Task with ID ${id} not found`);
+    }
+  }
+
+  async updateStatus(id: number, isCompleted: boolean): Promise<Task> {
+    const task = await this.findOne(id);
+    task.isCompleted = isCompleted;
+    return await this.tasksRepository.save(task);
   }
 }
