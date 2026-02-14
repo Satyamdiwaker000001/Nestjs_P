@@ -6,6 +6,8 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors();
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -24,10 +26,13 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  const port = 3000;
-  await app.listen(port);
+  // Use dynamic port for deployment, fallback to 3000 locally
+  const port = process.env.PORT || 3000;
 
-  console.log(`🚀 Backend is running on: http://localhost:${port}`);
+  // '0.0.0.0' is required for cloud hosting providers
+  await app.listen(port, '0.0.0.0');
+
+  console.log(`🚀 System Online on Port: ${port}`);
   console.log(`📄 Swagger UI available at: http://localhost:${port}/api`);
 }
 
